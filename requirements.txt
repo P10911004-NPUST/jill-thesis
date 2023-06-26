@@ -1,0 +1,9 @@
+pipwin
+wheel
+gdal
+fiona
+pycaret[full]
+opencv-contrib-python
+streamlit
+rioxarray
+geopandas
