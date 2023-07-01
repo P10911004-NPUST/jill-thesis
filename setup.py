@@ -16,14 +16,18 @@ def pipwin_install(pkgs_name):
         print(f"{pkgs_name} already exists.")
 
 subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--upgrade', 'pip'])
+subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'wheel'])
+
+subprocess.check_call([sys.executable, '-m', 'pip', 'install', './wheel/GDAL-3.4.3-cp310-cp310-win_amd64.whl'])
+subprocess.check_call([sys.executable, '-m', 'pip', 'install', './wheel/Fiona-1.8.21-cp310-cp310-win_amd64.whl'])
 
 # implement pip as a subprocess:
-subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'pipwin', 'wheel'])
-pipwin_install("GDAL")
-pipwin_install("Fiona")
+# subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'pipwin', 'wheel'])
+# pipwin_install("GDAL")
+# pipwin_install("Fiona")
 
 subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'geopandas', 'rioxarray'])
-subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'pycaret[full]'])
+subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'pycaret'])
 subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'streamlit'])
 subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'opencv-contrib-python', 'scikit-image'])
 
