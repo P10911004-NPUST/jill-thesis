@@ -6,6 +6,7 @@
 
 import os
 import sys
+import re
 import subprocess
 import tempfile
 import numpy as np
@@ -15,6 +16,7 @@ import skimage as ski
 import rioxarray as rxr
 import geopandas as gpd
 import streamlit as st
+from streamlit.web import cli as stcli
 import xarray as xr
 from rasterio.io import MemoryFile
 
@@ -102,11 +104,9 @@ else:
     if NIR_filename != "None":
         NIR_file = uploaded_files[filenames.index(NIR_filename) - 1]
         NIR = read_tif(NIR_file)
-st.divider()
-       
+st.divider()    
 
 # streamlit run pycode\vegetation_indices.py
-subprocess.run("streamlit run pycode\\vegetation_indices.py")
-
-# sys.exec_prefix
-# sys.executable
+if __name__ == '__main__':
+    sys.argv = ["streamlit", "run", "pycode\\vegetation_indices.py"]
+    sys.exit(stcli.main())
