@@ -3,7 +3,7 @@ import sys
 import subprocess
 from pathlib import Path
 
-pyenv_dir = Path(sys.executable).parent.parent
+pyenv_dir = Path(sys.exec_prefix)
 pkgs = os.listdir(os.path.join(pyenv_dir, "Lib", "site-packages"))
 
 if not os.path.exists(os.path.join(pyenv_dir.parent, ".streamlit")):
@@ -28,6 +28,5 @@ subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'streamlit'])
 subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'opencv-contrib-python', 'scikit-image'])
 
 # process output with an API in the subprocess module:
-reqs = subprocess.check_output([sys.executable, '-m', 'pip',
-'freeze'])
-installed_packages = [r.decode().split('==')[0] for r in reqs.split()]
+# reqs = subprocess.check_output([sys.executable, '-m', 'pip', 'freeze'])
+# installed_packages = [r.decode().split('==')[0] for r in reqs.split()]

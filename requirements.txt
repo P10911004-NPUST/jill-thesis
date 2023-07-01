@@ -1,7 +1,7 @@
 pipwin
 wheel
-gdal
-fiona
+GDAL
+Fiona
 pycaret[full]
 opencv-contrib-python
 streamlit
