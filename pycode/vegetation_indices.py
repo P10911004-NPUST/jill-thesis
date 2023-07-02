@@ -6,12 +6,10 @@
 
 import os
 import sys
-import re
-import subprocess
-import tempfile
+from pathlib import Path
+from collections import Counter
 import numpy as np
 import pandas as pd
-import cv2
 import skimage as ski
 import rioxarray as rxr
 import geopandas as gpd
@@ -21,6 +19,13 @@ import xarray as xr
 from rasterio.io import MemoryFile
 
 print(f"Using venv: {sys.exec_prefix}")
+# print(f"Executing {Path(__file__).name}")
+
+def ifelse(cond, yes = True, no = False):
+    if cond:
+        return(yes)
+    else:
+        return(no)
 
 def read_tif(tifFile):
     with MemoryFile(tifFile) as mf:
@@ -57,7 +62,7 @@ uploaded_files = st.file_uploader("TIF files", type=['tif', 'tiff'], accept_mult
 if len(uploaded_files) != 0:
     st.success(f"{len(uploaded_files)} files successfully uploaded", icon="✅")
 
-c11, c12 = st.columns([5, 2])
+collect_bands = {}
 
 if len(uploaded_files) == 0:
     RGB_filename = st.selectbox("RGB band: ", options=['None'], disabled=True)
@@ -82,31 +87,80 @@ else:
     if RGB_filename != "None":
         # [lst.index(str) - 1] is to match the index length of the uploaded_files
         RGB_file = uploaded_files[filenames.index(RGB_filename) - 1]
-        RGB = read_tif(RGB_file) 
+        RGB = read_tif(RGB_file)
+        if RGB is not None:
+            collect_bands['RGB'] = True
         # c12.markdown(f"\n RGB(Depth, Y, X): {RGB.shape}")
 
     if R_filename != "None":
         R_file = uploaded_files[filenames.index(R_filename) - 1]
         R = read_tif(R_file)
+        if R is not None:
+            collect_bands['R'] = True
 
     if G_filename != "None":
         G_file = uploaded_files[filenames.index(G_filename) - 1]
         G = read_tif(G_file)
+        if G is not None:
+            collect_bands['G'] = True
 
     if B_filename != "None":
         B_file = uploaded_files[filenames.index(B_filename) - 1]
         B = read_tif(B_file)
+        if B is not None:
+            collect_bands['B'] = True
 
     if RE_filename != "None":
         RE_file = uploaded_files[filenames.index(RE_filename) - 1]
         RE = read_tif(RE_file)
+        if RE is not None:
+            collect_bands['RE'] = True
 
     if NIR_filename != "None":
         NIR_file = uploaded_files[filenames.index(NIR_filename) - 1]
         NIR = read_tif(NIR_file)
-st.divider()    
+        if NIR is not None:
+            collect_bands['NIR'] = True
+
+    vi_requirements = {
+        'NDVI': ['NIR', 'R'],
+        'DATT': ['NIR', 'RE', 'R'],
+        'GNDVI': ['NIR', 'G'],
+        'NDTI': ['R', 'G'],
+        'NExG': ['R', 'G', 'B'],
+        'NGRDI': ['R', 'G'],
+        'VARI': ['R', 'G', 'B']
+        }
+    
+    vi_options = []
+    for key, val in vi_requirements.items():
+        res = True
+        for i in val:
+            if i not in collect_bands.keys():
+                res = False
+                break
+        if res:
+            vi_options.append(key)
+
+    st.divider() 
+
+    st.selectbox("Select VI layer:", vi_options)
+    
+    
+
+  
+
+
+
+
+
+
 
 # streamlit run pycode\vegetation_indices.py
-if __name__ == '__main__':
-    sys.argv = ["streamlit", "run", "pycode\\vegetation_indices.py"]
-    sys.exit(stcli.main())
+try:
+    if __name__ == '__main__':
+        sys.argv = ["streamlit", "run", os.path.join("pycode", Path(__file__).name)]
+        # sys.exit(stcli.main())
+        sys.exit(stcli.main())
+except:
+    pass
