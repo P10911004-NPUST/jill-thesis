@@ -1,0 +1,4 @@
+Fiona
+streamlit
+geopandas
+rioxarray

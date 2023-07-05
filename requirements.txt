@@ -1,9 +1,0 @@
-pipwin
-wheel
-GDAL
-Fiona
-pycaret[full]
-opencv-contrib-python
-streamlit
-rioxarray
-geopandas
