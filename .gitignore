@@ -8,6 +8,13 @@ ENV/
 env.bak/
 venv.bak/
 
+# Images
+*.tif
+*.tiff
+*.jpg
+*.jpeg
+*.png
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -1,0 +1,21 @@
+change_font = '''
+    <style>
+        @font-face {
+        font-family: 'HarmonyOS_Sans_Bold';
+        font-style: normal;
+        font-weight: 400;
+        src: url(https://github.com/P10911004-NPUST/pycaret/tree/main/fonts/HarmonyOS_Sans/HarmonyOS_Sans/HarmonyOS_Sans_Bold.ttf) format('ttf');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+        }
+        html, body, [class*="css"]  {
+        font-family: 'HarmonyOS_Sans_Bold';
+        font-size: 12px;
+        }
+    </style>
+'''
+
+hide_footer = '''
+    <style>
+        footer {visibility: hidden;}
+    </style>
+'''
