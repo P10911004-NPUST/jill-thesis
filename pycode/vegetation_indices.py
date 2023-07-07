@@ -2,7 +2,6 @@
 
 import os
 import sys
-from pathlib import Path
 import rioxarray as rxr
 import streamlit as st
 from streamlit.web import cli as stcli
@@ -18,7 +17,7 @@ uploaded_files = st.file_uploader("TIF files", type=['tif', 'tiff'], accept_mult
 if len(uploaded_files) != 0:
     st.success(f"{len(uploaded_files)} files successfully uploaded", icon="✅")
 
-collect_bands = {}
+collected_bands = []
 
 if len(uploaded_files) == 0:
     RGB_filename = st.selectbox("RGB band: ", options=['None'], disabled=True)
@@ -45,38 +44,38 @@ else:
         RGB_file = uploaded_files[filenames.index(RGB_filename) - 1]
         RGB = gis.read_tif(RGB_file)
         if RGB is not None:
-            collect_bands['RGB'] = True
+            collected_bands.append('RGB')
         # c12.markdown(f"\n RGB(Depth, Y, X): {RGB.shape}")
 
     if R_filename != "None":
         R_file = uploaded_files[filenames.index(R_filename) - 1]
         R = gis.read_tif(R_file)
         if R is not None:
-            collect_bands['R'] = True
+            collected_bands.append('R')
 
     if G_filename != "None":
         G_file = uploaded_files[filenames.index(G_filename) - 1]
         G = gis.read_tif(G_file)
         if G is not None:
-            collect_bands['G'] = True
+            collected_bands.append('G')
 
     if B_filename != "None":
         B_file = uploaded_files[filenames.index(B_filename) - 1]
         B = gis.read_tif(B_file)
         if B is not None:
-            collect_bands['B'] = True
+            collected_bands.append('B')
 
     if RE_filename != "None":
         RE_file = uploaded_files[filenames.index(RE_filename) - 1]
         RE = gis.read_tif(RE_file)
         if RE is not None:
-            collect_bands['RE'] = True
+            collected_bands.append('RE')
 
     if NIR_filename != "None":
         NIR_file = uploaded_files[filenames.index(NIR_filename) - 1]
         NIR = gis.read_tif(NIR_file)
         if NIR is not None:
-            collect_bands['NIR'] = True
+            collected_bands.append('NIR')
 
     vi_requirements = {
         'NDVI': ['NIR', 'R'],
@@ -92,7 +91,7 @@ else:
     for key, val in vi_requirements.items():
         res = True
         for i in val:
-            if i not in collect_bands.keys():
+            if i not in collected_bands:
                 res = False
                 break
         if res:
@@ -107,7 +106,7 @@ else:
 # streamlit run pycode\vegetation_indices.py
 try:
     if __name__ == '__main__':
-        sys.argv = ["streamlit", "run", os.path.join("pycode", Path(__file__).name)]
+        sys.argv = ["streamlit", "run", os.path.join("pycode", os.path.basename(__file__))]
         # sys.exit(stcli.main())
         sys.exit(stcli.main())
 except:
