@@ -10,6 +10,8 @@ from rasterio.io import MemoryFile
 from utils import gis
 from utils.streamlit_config import *
 
+all_band = ['RGB', 'R', 'G', 'B', 'RE', 'NIR', 'DSM', 'DTM']
+
 vi_requirements = {
         'CSM': ['DSM', 'DTM'],
         'NDVI': ['NIR', 'R'],
@@ -24,113 +26,161 @@ vi_requirements = {
 st.markdown(change_font, unsafe_allow_html=True)
 st.markdown(hide_footer, unsafe_allow_html=True)
 
-uploaded_files = st.file_uploader("TIF files", type=['tif', 'tiff'], accept_multiple_files=True)
-if len(uploaded_files) != 0:
+uploaded_files = st.file_uploader(
+    "TIF files", type=['tif', 'jpg', 'png', 'bmp'], accept_multiple_files=True
+    )
+
+if len(uploaded_files) > 0:
     st.success(f"{len(uploaded_files)} files successfully uploaded", icon="✅")
 
-collected_bands = []
-if len(uploaded_files) == 0:
-    RGB_filename = st.selectbox("RGB band: ", options=['None'], disabled=True)
-    R_filename = st.selectbox("R band: ", options=['None'], disabled=True)
-    G_filename = st.selectbox("G band: ", options=['None'], disabled=True)
-    B_filename = st.selectbox("B band: ", options=['None'], disabled=True)
-    RE_filename = st.selectbox("RE band: ", options=['None'], disabled=True)
-    NIR_filename = st.selectbox("NIR band: ", options=['None'], disabled=True)
-    DSM_filename = st.selectbox("DSM band: ", options=['None'], disabled=True)
-    DTM_filename = st.selectbox("DTM band: ", options=['None'], disabled=True)
-else:
     filenames = [file.name for file in uploaded_files]
-        # After inserting a string, the length of filenames is not matching with uploaded_files
-        # this can raise error during indexing uploaded_files with the filenames index.
     filenames.insert(0, 'None')
 
-    RGB_filename = st.selectbox("RGB band: ", options=filenames)
-    R_filename = st.selectbox("R band: ", options=filenames)
-    G_filename = st.selectbox("G band: ", options=filenames)
-    B_filename = st.selectbox("B band: ", options=filenames)
-    RE_filename = st.selectbox("RE band: ", options=filenames)
-    NIR_filename = st.selectbox("NIR band: ", options=filenames)
-    DSM_filename = st.selectbox("DSM band: ", options=filenames)
-    DTM_filename = st.selectbox("DTM band: ", options=filenames)
-
-    if RGB_filename != "None":
-        # [lst.index(str) - 1] is to match the index length of the uploaded_files
-        RGB_file = uploaded_files[filenames.index(RGB_filename) - 1]
-        RGB = gis.read_tif(RGB_file)
-
-    if R_filename != "None":
-        R_file = uploaded_files[filenames.index(R_filename) - 1]
-        R = gis.read_tif(R_file).squeeze()
-
-    if G_filename != "None":
-        G_file = uploaded_files[filenames.index(G_filename) - 1]
-        G = gis.read_tif(G_file).squeeze()
-
-    if B_filename != "None":
-        B_file = uploaded_files[filenames.index(B_filename) - 1]
-        B = gis.read_tif(B_file).squeeze()
-
-    if RE_filename != "None":
-        RE_file = uploaded_files[filenames.index(RE_filename) - 1]
-        RE = gis.read_tif(RE_file).squeeze()
-
-    if NIR_filename != "None":
-        NIR_file = uploaded_files[filenames.index(NIR_filename) - 1]
-        NIR = gis.read_tif(NIR_file).squeeze()
-
-    if DSM_filename != "None":
-        DSM_file = uploaded_files[filenames.index(DSM_filename) - 1]
-        DSM = gis.read_tif(DSM_file).squeeze()
+    RGB_selbox = st.selectbox("RGB band: ", options=filenames)
+    R_selbox = st.selectbox("R band: ", options=filenames)
+    G_selbox = st.selectbox("G band: ", options=filenames)
+    B_selbox = st.selectbox("B band: ", options=filenames)
+    RE_selbox = st.selectbox("RE band: ", options=filenames)
+    NIR_selbox = st.selectbox("NIR band: ", options=filenames)
+    DSM_selbox = st.selectbox("DSM band: ", options=filenames)
+    DTM_selbox = st.selectbox("DTM band: ", options=filenames)
     
-    if DTM_filename != "None":
-        DTM_file = uploaded_files[filenames.index(DTM_filename) - 1]
-        DTM = gis.read_tif(DTM_file).squeeze()
+    for i in all_band:
+        if globals()[f"{i}_selbox"] != 'None':
+            filename_ind = filenames.index(globals()[f"{i}_selbox"]) - 1
+            
+            globals()[i] = gis.read_memory(uploaded_files[filename_ind])
 
-    if 'RGB' in globals():
+    if RGB_selbox != 'None':
         if RGB.shape[0] not in [3, 4]:
             st.code("RGB image should has at least 3 bands")
-        else:
-            for rgb in ['R', 'G', 'B']:
-                i = 0
-                if rgb not in globals():
-                    exec(f"{rgb} = RGB[{i}]")
-                i += 1
-
-    collected_bands = [i for i in ['R', 'G', 'B', 'RE', 'NIR', 'DSM', 'DTM'] if i in globals()]
+        if R_selbox == 'None':
+            R = RGB[0]
+        if G_selbox == 'None':
+            G = RGB[1]
+        if B_selbox == 'None':
+            B = RGB[2]
     
-    # Get the smallest bands in area for resizing the others
-    if len(collected_bands) > 1:
-        ref = collected_bands[0]
-        for band in collected_bands:
-            ref_dim = eval(f"{ref}.shape[-2] * {ref}.shape[-1]")
-            band_dim = eval(f"{band}.shape[-2] * {band}.shape[-1]")
-            if band_dim < ref_dim:
-                ref = band
+    collected_bands = [i for i in all_band if i in globals() and i != 'RGB']
+    st.code(f"Collected bands: {collected_bands}")
+    
+# Get the band which has the smallest area
+if 'collected_bands' in globals() and len(collected_bands) > 1:
+    s = collected_bands[0]
+    sy, sx = globals()[s].shape
+    for i in collected_bands[1:]:
+        sy, sx = globals()[s].shape
+        iy, ix = globals()[i].shape
+        if (iy * ix) < (sy * sx):
+            s = i
+    st.code(f"The smallest layer is: [{s}]")
+    s = globals()[s]
+    st.code(s)
 
-        for band in collected_bands:
-            if band != ref:
-                pass
-                # r = gis.layer_match(R, globals()[ref])
-                # globals()[band] = gis.layer_match(globals()[band], globals()[ref])
 
-        if R is not None and DTM is not None:
-            r = gis.layer_match(R, DTM)
-            st.code(DTM.crs)
-            st.code(r.crs)
+# collected_bands = []
+# if len(uploaded_files) == 0:
+#     RGB_filename = st.selectbox("RGB band: ", options=['None'], disabled=True)
+#     R_filename = st.selectbox("R band: ", options=['None'], disabled=True)
+#     G_filename = st.selectbox("G band: ", options=['None'], disabled=True)
+#     B_filename = st.selectbox("B band: ", options=['None'], disabled=True)
+#     RE_filename = st.selectbox("RE band: ", options=['None'], disabled=True)
+#     NIR_filename = st.selectbox("NIR band: ", options=['None'], disabled=True)
+#     DSM_filename = st.selectbox("DSM band: ", options=['None'], disabled=True)
+#     DTM_filename = st.selectbox("DTM band: ", options=['None'], disabled=True)
+# else:
+#     filenames = [file.name for file in uploaded_files].insert(0, 'None')
+#         # After inserting a string, the length of filenames is not matching with uploaded_files
+#         # this can raise error during indexing uploaded_files with the filenames index.
+#     filenames.insert(0, 'None')
+
+#     RGB_filename = st.selectbox("RGB band: ", options=filenames)
+#     R_filename = st.selectbox("R band: ", options=filenames)
+#     G_filename = st.selectbox("G band: ", options=filenames)
+#     B_filename = st.selectbox("B band: ", options=filenames)
+#     RE_filename = st.selectbox("RE band: ", options=filenames)
+#     NIR_filename = st.selectbox("NIR band: ", options=filenames)
+#     DSM_filename = st.selectbox("DSM band: ", options=filenames)
+#     DTM_filename = st.selectbox("DTM band: ", options=filenames)
+
+#     if RGB_filename != "None":
+#         # [lst.index(str) - 1] is to match the index length of the uploaded_files
+#         RGB_file = uploaded_files[filenames.index(RGB_filename) - 1]
+#         RGB = gis.read_tif(RGB_file)
+
+#     if R_filename != "None":
+#         R_file = uploaded_files[filenames.index(R_filename) - 1]
+#         R = gis.read_tif(R_file).squeeze()
+
+#     if G_filename != "None":
+#         G_file = uploaded_files[filenames.index(G_filename) - 1]
+#         G = gis.read_tif(G_file).squeeze()
+
+#     if B_filename != "None":
+#         B_file = uploaded_files[filenames.index(B_filename) - 1]
+#         B = gis.read_tif(B_file).squeeze()
+
+#     if RE_filename != "None":
+#         RE_file = uploaded_files[filenames.index(RE_filename) - 1]
+#         RE = gis.read_tif(RE_file).squeeze()
+
+#     if NIR_filename != "None":
+#         NIR_file = uploaded_files[filenames.index(NIR_filename) - 1]
+#         NIR = gis.read_tif(NIR_file).squeeze()
+
+#     if DSM_filename != "None":
+#         DSM_file = uploaded_files[filenames.index(DSM_filename) - 1]
+#         DSM = gis.read_tif(DSM_file).squeeze()
+    
+#     if DTM_filename != "None":
+#         DTM_file = uploaded_files[filenames.index(DTM_filename) - 1]
+#         DTM = gis.read_tif(DTM_file).squeeze()
+
+#     if 'RGB' in globals():
+#         if RGB.shape[0] not in [3, 4]:
+#             st.code("RGB image should has at least 3 bands")
+#         else:
+#             for rgb in ['R', 'G', 'B']:
+#                 i = 0
+#                 if rgb not in globals():
+#                     exec(f"{rgb} = RGB[{i}]")
+#                 i += 1
+
+#     collected_bands = [i for i in ['R', 'G', 'B', 'RE', 'NIR', 'DSM', 'DTM'] if i in globals()]
+    
+#     # Get the smallest bands in area for resizing the others
+#     if len(collected_bands) > 1:
+#         ref = collected_bands[0]
+#         for band in collected_bands:
+#             ref_dim = eval(f"{ref}.shape[-2] * {ref}.shape[-1]")
+#             band_dim = eval(f"{band}.shape[-2] * {band}.shape[-1]")
+#             if band_dim < ref_dim:
+#                 ref = band
+
+#         for band in collected_bands:
+#             if band != ref:
+#                 pass
+#                 # r = gis.layer_match(R, globals()[ref])
+#                 # globals()[band] = gis.layer_match(globals()[band], globals()[ref])
+
+#         if R is not None and DTM is not None:
+#             r = gis.layer_match(R, DTM)
+#             st.code(DTM.crs)
+#             st.code(r.crs)
             
 
-    vi_options = []
-    for key, val in vi_requirements.items():
-        res = True
-        for i in val:
-            if i not in collected_bands:
-                res = False
-                break
-        if res:
-            vi_options.append(key)
+#     vi_options = []
+#     for key, val in vi_requirements.items():
+#         res = True
+#         for i in val:
+#             if i not in collected_bands:
+#                 res = False
+#                 break
+#         if res:
+#             vi_options.append(key)
 
-    st.divider() 
-    st.selectbox("Select VI layer:", vi_options)
+#     st.divider() 
+#     st.selectbox("Select VI layer:", vi_options)
     
 
 # streamlit run pycode\vegetation_indices.py
