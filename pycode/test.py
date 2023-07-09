@@ -2,6 +2,7 @@
 
 import os
 import sys
+import numpy as np
 import matplotlib.pyplot as plt
 import rioxarray as rxr
 import streamlit as st
@@ -18,9 +19,8 @@ for i in img_list:
         i_name = i.split('.')[:-1][0]
         globals()[i_name] = rxr.open_rasterio(i_dir).squeeze()
 
-RGB.shape[0] in [3, 4]
-rh, rw = RE.shape
-
+RGB.data
+RGB.astype(np.double)
 # r = RGB[0].rio.reproject_match(G)
 r = gis.layer_match(RGB[0], G)
 g = gis.layer_match(RGB[1], R)

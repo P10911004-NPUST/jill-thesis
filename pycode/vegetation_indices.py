@@ -2,6 +2,7 @@
 
 import os
 import sys
+import numpy as np
 import rioxarray as rxr
 import streamlit as st
 from streamlit.web import cli as stcli
@@ -45,12 +46,13 @@ if len(uploaded_files) > 0:
     DSM_selbox = st.selectbox("DSM band: ", options=filenames)
     DTM_selbox = st.selectbox("DTM band: ", options=filenames)
     
+    # Read-in file according to the filenames assigned in st.selectBox
     for i in all_band:
         if globals()[f"{i}_selbox"] != 'None':
             filename_ind = filenames.index(globals()[f"{i}_selbox"]) - 1
-            
             globals()[i] = gis.read_memory(uploaded_files[filename_ind])
 
+    # Automatically replace the non-assigned R, G, B respectively with RGB splits
     if RGB_selbox != 'None':
         if RGB.shape[0] not in [3, 4]:
             st.code("RGB image should has at least 3 bands")
@@ -61,21 +63,55 @@ if len(uploaded_files) > 0:
         if B_selbox == 'None':
             B = RGB[2]
     
-    collected_bands = [i for i in all_band if i in globals() and i != 'RGB']
+    # Record bands' name that had been successfully read-in
+    collected_bands = [i for i in all_band if i in globals()]
     st.code(f"Collected bands: {collected_bands}")
-    
-# Get the band which has the smallest area
-if 'collected_bands' in globals() and len(collected_bands) > 1:
-    s = collected_bands[0]
-    sy, sx = globals()[s].shape
-    for i in collected_bands[1:]:
-        sy, sx = globals()[s].shape
-        iy, ix = globals()[i].shape
-        if (iy * ix) < (sy * sx):
-            s = i
-    st.code(f"The smallest layer is: [{s}]")
-    s = globals()[s]
-    st.code(s)
+
+    vi_options = []
+    for key, val in vi_requirements.items():
+        res = True
+        for i in val:
+            if i not in collected_bands:
+                res = False
+                break
+        if res:
+            vi_options.append(key)
+
+    st.divider() 
+    st.selectbox("Select VI layer:", vi_options)
+
+# Get the band which has the smallest area,
+# The DSM and DTM were not compared
+def get_smallest(required_bands: list):
+    s = "List not found"
+    if len(required_bands) > 1:
+        s = required_bands[0]
+        for i in required_bands[1:]:
+            sy, sx = globals()[s].shape
+            iy, ix = globals()[i].shape
+            if (iy * ix) < (sy * sx):
+                s = i
+    return s
+
+# Resizing each band by reprojecting to the smallest one
+# But the DSM and DTM would be treated alone in CSM manipulation
+def layer_match(lyrs: list):
+    resizing_img = [i for i in lyrs if i != s]
+    st.code(f"resizing images: {resizing_img}")
+    if len(resizing_img) > 0:
+        for i in resizing_img:
+            st.code(f"{i}: {globals()[i].shape}")
+
+        for i in resizing_img:
+            st.code(i)
+            globals()[i] = globals()[i].rio.reproject_match(globals()[s])
+            globals()[i] = globals()[i].assign_coords({
+                'x': globals()[s].x,
+                'y': globals()[s].y
+            })
+
+        
+
 
 
 # collected_bands = []
